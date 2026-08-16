@@ -1,0 +1,6 @@
+{
+  "name": "DO IT - Plateforme Éducative Multi-Domaines",
+  "description": "Plateforme d'apprentissage technique et industriel multi-domaines avec cours interactifs, examens sanctionnants, certifications vérifiables et gestion B2B.",
+  "requestFramePermissions": [],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}

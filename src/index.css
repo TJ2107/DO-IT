@@ -1,0 +1,26 @@
+@import "tailwindcss";
+
+@layer base {
+  body {
+    font-family: 'Plus Jakarta Sans', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+  }
+}
+
+@media print {
+  body * {
+    visibility: hidden;
+  }
+  #printable-diplome, #printable-diplome * {
+    visibility: visible;
+  }
+  #printable-diplome {
+    position: absolute;
+    left: 0;
+    top: 0;
+    width: 100%;
+    margin: 0;
+    padding: 2cm !important;
+    border-width: 8px !important;
+    box-shadow: none !important;
+  }
+}
