@@ -525,7 +525,16 @@ export const EnterpriseView: React.FC = () => {
                 </tr>
               </thead>
               <tbody className="divide-y divide-slate-100 font-medium text-slate-700">
-                {filteredCollaborateurs.map((collab) => (
+                {filteredCollaborateurs.length === 0 ? (
+                  <tr>
+                    <td colSpan={7} className="py-12 px-4 text-center text-slate-500">
+                      <Users className="w-10 h-10 text-slate-300 mx-auto mb-2" />
+                      <p className="font-bold text-slate-700">Aucun collaborateur enregistré pour le moment</p>
+                      <p className="text-xs text-slate-400 mt-1">Utilisez le bouton « Inscrire un Collaborateur » ou « Import Excel » ci-dessus pour ajouter vos équipes.</p>
+                    </td>
+                  </tr>
+                ) : (
+                  filteredCollaborateurs.map((collab) => (
                   <tr key={collab.id} className="hover:bg-slate-50/80 transition">
                     <td className="py-3.5 px-3">
                       <div className="font-bold text-slate-900">{collab.nom}</div>
@@ -560,7 +569,7 @@ export const EnterpriseView: React.FC = () => {
                       <div className="w-24">
                         <div className="flex justify-between text-[10px] font-bold mb-1">
                           <span>{collab.progressionMoyenne}%</span>
-                          <span className="text-slate-400 font-normal">{collab.heuresFormation || 20}h</span>
+                          <span className="text-slate-400 font-normal">{collab.heuresFormation || 0}h</span>
                         </div>
                         <div className="w-full bg-slate-200 h-1.5 rounded-full overflow-hidden">
                           <div
@@ -579,7 +588,7 @@ export const EnterpriseView: React.FC = () => {
 
                     <td className="py-3.5 px-3 text-center">
                       <span className="font-mono font-bold text-slate-900 bg-slate-100 px-2 py-0.5 rounded">
-                        {collab.devoirsMoyenneSur20 ? `${collab.devoirsMoyenneSur20}/20` : '17.0/20'}
+                        {collab.devoirsMoyenneSur20 ? `${collab.devoirsMoyenneSur20}/20` : '-'}
                       </span>
                     </td>
 
@@ -623,8 +632,10 @@ export const EnterpriseView: React.FC = () => {
                       </div>
                     </td>
                   </tr>
-                ))}
+                ))
+              )}
               </tbody>
+
             </table>
           </div>
         </div>

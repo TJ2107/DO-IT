@@ -80,100 +80,34 @@ export const AdminView: React.FC<AdminViewProps> = ({ user, onUpdateUser }) => {
     const list = getStoredTPSubmissions();
     setTpSubmissions(list);
 
-    // Load or generate initial invoices
+    // Load user invoices or start empty
     const initialInvoices: FactureRecu[] = user.factures && user.factures.length > 0 
       ? user.factures 
-      : [
-          generateInvoiceForUser(user, {
-            coursTitre: 'Électricité Industrielle & Électrotechnique Fondamentale',
-            domaineNom: 'Électricité',
-            montantHT: 25000,
-            modePaiement: 'Airtel Money (+242 05 337 97 74)',
-            referenceTransaction: 'TR-AIRTEL-984210375'
-          }),
-          generateInvoiceForUser({
-            ...user,
-            id: 'usr_002',
-            nom: 'Alexandre Vasseur',
-            email: 'alexandre.vasseur@industrie-tech.fr'
-          }, {
-            coursTitre: 'Programmation Python Industrielle & IA Embarquée',
-            domaineNom: 'Programmation',
-            montantHT: 35000,
-            modePaiement: 'MTN Mobile Money (+242 06 944 35 68)',
-            referenceTransaction: 'TR-MTN-772190841'
-          }),
-        ];
+      : [];
     setInvoicesList(initialInvoices);
   }, [user]);
 
-  // Mock list of registered students/apprenants in the platform
-  const [apprenants, setApprenants] = useState<ApprenantRecord[]>([
-    {
-      id: 'usr_001',
-      nom: user.nom || 'Jean Dupont',
-      email: user.email || 'jean.dupont@entreprise-tech.fr',
-      poste: 'Technicien Supérieur / Apprenant',
-      coursInscrit: 'Électricité Industrielle & Électrotechnique Fondamentale',
-      montantPaye: 25000,
-      transactionAirtel: 'TR-AIRTEL-984210375',
-      statutPaiement: 'Validé',
-      factureId: 'inv_001',
-      factureNumero: 'FACT-DOIT-2026-03-9842',
-      datePaiement: '19/03/2026',
-      progressionGlobale: 65,
-      certificatsCount: user.certifications.length || 1,
-      derniereActivite: 'Aujourd’hui, 11:45',
-      notifications: ['Bienvenue sur DO IT ! Votre facture officielle N° FACT-DOIT-2026-03-9842 a été émise et acquittée par Airtel Money.'],
-    },
-    {
-      id: 'usr_002',
-      nom: 'Alexandre Vasseur',
-      email: 'alexandre.vasseur@industrie-tech.fr',
-      poste: 'Apprenti Électromécanicien',
-      coursInscrit: 'Programmation Python Industrielle & IA Embarquée',
-      montantPaye: 35000,
-      transactionAirtel: 'TR-MTN-772190841',
-      statutPaiement: 'Validé',
-      factureId: 'inv_002',
-      factureNumero: 'FACT-DOIT-2026-03-7721',
-      datePaiement: '18/03/2026',
-      progressionGlobale: 90,
-      certificatsCount: 3,
-      derniereActivite: 'Hier, 16:20',
-      notifications: ['Examen Python réussi avec mention Très Bien. Facture acquittée.'],
-    },
-    {
-      id: 'usr_003',
-      nom: 'Sarah Benali',
-      email: 'sarah.benali@qualite-hse.fr',
-      poste: 'Ingénieure Qualité & Compliance',
-      coursInscrit: 'Management de la Qualité Industrielle & Normes ISO / HSE',
-      montantPaye: 25000,
-      transactionAirtel: 'TR-AIRTEL-556102938',
-      statutPaiement: 'Validé',
-      datePaiement: '17/03/2026',
-      progressionGlobale: 45,
-      certificatsCount: 1,
-      derniereActivite: 'Il y a 2 jours',
-      notifications: ['Rappel : Devoir Maison HSE à rendre avant vendredi.'],
-    },
-    {
-      id: 'usr_004',
-      nom: 'Thomas Leclerc',
-      email: 'thomas.leclerc@automation-rd.fr',
-      poste: 'Développeur Automatisme',
-      coursInscrit: 'Automatisme, Régulation Industrielle & Systèmes SCADA',
-      montantPaye: 25000,
-      transactionAirtel: 'TR-AIRTEL-118293045',
-      statutPaiement: 'En attente',
-      datePaiement: 'En attente',
-      progressionGlobale: 15,
-      certificatsCount: 0,
-      derniereActivite: 'En attente de validation paiement',
-      notifications: ['Votre récapitulatif de paiement Airtel Money (+242 05 337 97 74 / +242 06 944 35 68) est en cours de validation par le secrétariat académique.'],
-    },
-  ]);
+  // List of registered students/apprenants in the platform (populated dynamically with logged-in user or empty)
+  const [apprenants, setApprenants] = useState<ApprenantRecord[]>(() => {
+    if (user.nom && user.email) {
+      return [{
+        id: user.id || 'usr_001',
+        nom: user.nom,
+        email: user.email,
+        poste: (user as any).poste || 'Apprenant',
+        coursInscrit: user.coursSuivis && user.coursSuivis.length > 0 ? user.coursSuivis[0] : 'Formation Technique DO IT',
+        montantPaye: 25000,
+        transactionAirtel: 'TR-AIRTEL-EN-ATTENTE',
+        statutPaiement: 'Validé',
+        progressionGlobale: Object.values(user.progressionParCours || {}).reduce<number>((a, b) => a + (Number(b) || 0), 0) || 0,
+        certificatsCount: user.certifications?.length || 0,
+        derniereActivite: 'En ligne',
+        notifications: [],
+      }];
+    }
+    return [];
+  });
+
 
   const handleValidatePayment = (id: string) => {
     const target = apprenants.find(a => a.id === id);
@@ -439,7 +373,16 @@ export const AdminView: React.FC<AdminViewProps> = ({ user, onUpdateUser }) => {
                     </tr>
                   </thead>
                   <tbody className="divide-y divide-slate-100">
-                    {filteredApprenants.map((app) => {
+                    {filteredApprenants.length === 0 ? (
+                      <tr>
+                        <td colSpan={5} className="py-12 px-4 text-center text-slate-500">
+                          <Users className="w-10 h-10 text-slate-300 mx-auto mb-2" />
+                          <p className="font-bold text-slate-700">Aucun apprenant enregistré pour le moment</p>
+                          <p className="text-xs text-slate-400 mt-1">Les apprenants inscrits apparaîtront ici automatiquement dès leur souscription.</p>
+                        </td>
+                      </tr>
+                    ) : (
+                      filteredApprenants.map((app) => {
                       const isSelected = selectedApprenant?.id === app.id;
                       const hasInvoice = !!app.factureNumero;
                       return (
@@ -562,7 +505,7 @@ export const AdminView: React.FC<AdminViewProps> = ({ user, onUpdateUser }) => {
                           </td>
                         </tr>
                       );
-                    })}
+                    }))}
                   </tbody>
                 </table>
               </div>

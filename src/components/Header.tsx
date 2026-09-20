@@ -137,10 +137,10 @@ export const Header: React.FC<HeaderProps> = ({ user, onUpdateUser, activeTab, o
             className="flex items-center gap-2.5 bg-white/10 hover:bg-white/20 border border-white/15 px-3 py-1.5 rounded-xl transition cursor-pointer"
           >
             <div className="w-8 h-8 rounded-lg bg-gradient-to-br from-blue-500 to-indigo-600 text-white font-bold flex items-center justify-center text-sm shadow-inner">
-              {user.nom.split(' ').map(n => n[0]).join('').slice(0, 2).toUpperCase() || 'JD'}
+              {user.nom ? user.nom.split(' ').filter(Boolean).map(n => n[0]).join('').slice(0, 2).toUpperCase() : <User className="w-4 h-4 text-white" />}
             </div>
             <div className="text-left hidden md:block">
-              <div className="text-xs font-bold leading-tight">{user.nom}</div>
+              <div className="text-xs font-bold leading-tight">{user.nom || 'Mon Espace'}</div>
               <div className="text-[10px] text-blue-200 capitalize">{user.role === 'entreprise' ? 'Compte B2B' : 'Apprenant'}</div>
             </div>
           </button>
