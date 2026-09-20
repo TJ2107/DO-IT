@@ -1,16 +1,21 @@
 import React, { useState } from 'react';
 import { Utilisateur } from '../types';
-import { Award, BookOpen, Clock, Flame, GraduationCap, ShieldCheck, Sparkles, User, CheckCircle, TrendingUp } from 'lucide-react';
+import { Award, BookOpen, Clock, Flame, GraduationCap, ShieldCheck, Sparkles, User, CheckCircle, TrendingUp, HelpCircle, Compass } from 'lucide-react';
+import { PWAInstallButton } from './PWAInstallButton';
+import { OfflineIndicator } from './OfflineIndicator';
+import { NotificationCenter } from './NotificationCenter';
 
 interface HeaderProps {
   user: Utilisateur;
   onUpdateUser: (updated: Utilisateur) => void;
   activeTab: string;
   onSelectTab: (tab: string) => void;
+  onNavigateTo?: (tab: string, courseId?: string) => void;
   onLogout?: () => void;
+  onOpenGuide?: () => void;
 }
 
-export const Header: React.FC<HeaderProps> = ({ user, onUpdateUser, activeTab, onSelectTab, onLogout }) => {
+export const Header: React.FC<HeaderProps> = ({ user, onUpdateUser, activeTab, onSelectTab, onNavigateTo, onLogout, onOpenGuide }) => {
   const [showProfileModal, setShowProfileModal] = useState(false);
   const [editName, setEditName] = useState(user.nom);
   const [editEmail, setEditEmail] = useState(user.email);
@@ -44,7 +49,7 @@ export const Header: React.FC<HeaderProps> = ({ user, onUpdateUser, activeTab, o
   };
 
   return (
-    <header className="bg-gradient-to-r from-blue-900 via-indigo-900 to-slate-900 text-white shadow-xl sticky top-0 z-40">
+    <header className="bg-gradient-to-r from-blue-900 via-indigo-900 to-slate-900 text-white shadow-xl relative z-20">
       {/* Top Banner */}
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-3.5 flex flex-col md:flex-row md:items-center md:justify-between gap-4">
         {/* Brand */}
@@ -68,7 +73,39 @@ export const Header: React.FC<HeaderProps> = ({ user, onUpdateUser, activeTab, o
         </div>
 
         {/* User Profile Bar */}
-        <div className="flex items-center gap-3 sm:gap-5 self-end md:self-auto">
+        <div className="flex flex-wrap items-center gap-2.5 sm:gap-4 self-end md:self-auto">
+          {/* Guide Interactif Pas à Pas */}
+          {onOpenGuide && (
+            <button
+              onClick={onOpenGuide}
+              className="flex items-center gap-1.5 bg-amber-400 hover:bg-amber-300 text-slate-950 px-3 py-1.5 rounded-xl font-bold text-xs transition cursor-pointer shadow-md shadow-amber-400/20"
+              title="Comment fonctionne l'application (Guide pas à pas)"
+            >
+              <Compass className="w-4 h-4 text-blue-950" />
+              <span className="hidden sm:inline">Guide Apprenant</span>
+              <span className="sm:hidden">Guide</span>
+            </button>
+          )}
+
+          {/* Offline / Online Network Indicator */}
+          <OfflineIndicator />
+
+          {/* Centre de Notifications */}
+          <NotificationCenter
+            user={user}
+            onUpdateUser={onUpdateUser}
+            onNavigateTo={(tab, courseId) => {
+              if (onNavigateTo) {
+                onNavigateTo(tab, courseId);
+              } else {
+                onSelectTab(tab);
+              }
+            }}
+          />
+
+          {/* PWA Direct Install Button */}
+          <PWAInstallButton />
+
           {/* Streak */}
           <div 
             title={`${user.streakJours} jours d'apprentissage consécutifs`}

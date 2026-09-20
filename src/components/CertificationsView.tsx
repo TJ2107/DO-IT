@@ -1,10 +1,12 @@
 import React, { useState } from 'react';
-import { Utilisateur, Certification, Badge } from '../types';
+import { Utilisateur, Certification, Badge, FactureRecu } from '../types';
 import { CertificateModal } from './CertificateModal';
+import { InvoiceModal } from './InvoiceModal';
+import { generateInvoiceForUser } from '../utils/invoiceGenerator';
 import { formatNiveau } from '../utils/storage';
 import { 
   Award, ShieldCheck, Download, Share2, CheckCircle2, 
-  ExternalLink, Sparkles, Flame, Trophy, Lock
+  ExternalLink, Sparkles, Flame, Trophy, Lock, Receipt, Eye, Printer
 } from 'lucide-react';
 
 interface CertificationsViewProps {
@@ -17,6 +19,19 @@ export const CertificationsView: React.FC<CertificationsViewProps> = ({
   onOpenVerifyTab,
 }) => {
   const [selectedCert, setSelectedCert] = useState<Certification | null>(null);
+  const [selectedFacture, setSelectedFacture] = useState<FactureRecu | null>(null);
+
+  const factures = user.factures && user.factures.length > 0 
+    ? user.factures 
+    : [
+        generateInvoiceForUser(user, {
+          coursTitre: 'Filière Électricité & Électrotechnique Avancée',
+          domaineNom: 'Électricité',
+          montantHT: 25000,
+          modePaiement: 'Airtel Money (+242 05 337 97 74)',
+          referenceTransaction: 'TR-AIRTEL-984210375'
+        })
+      ];
 
   return (
     <div className="space-y-8">
@@ -28,7 +43,7 @@ export const CertificationsView: React.FC<CertificationsViewProps> = ({
             Passeport de Compétences Professionnelles
           </div>
           <h2 className="text-2xl sm:text-3xl font-black tracking-tight text-white">
-            Vos Diplômes & Certifications
+            Vos Diplômes, Certifications & Factures
           </h2>
           <p className="text-sm text-blue-200 max-w-xl">
             Toutes vos certifications obtenues sur DO IT sont protégées par une clé de vérification cryptographique infalsifiable reconnue par les entreprises partenaires.
@@ -171,11 +186,84 @@ export const CertificationsView: React.FC<CertificationsViewProps> = ({
         </div>
       </div>
 
+      {/* Mes Factures & Reçus Fiscaux Section */}
+      <div className="bg-white rounded-2xl border border-slate-200 p-6 sm:p-8 shadow-xs space-y-6">
+        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 pb-4 border-b border-slate-100">
+          <div>
+            <h3 className="text-lg font-black text-slate-900 flex items-center gap-2">
+              <Receipt className="w-5 h-5 text-blue-900" />
+              Mes Reçus de Paiement & Factures Officielles
+            </h3>
+            <p className="text-xs text-slate-500 mt-0.5">
+              Téléchargez et imprimez vos justificatifs fiscaux avec mentions légales, numérotation officielle et détails de transaction Airtel/MTN.
+            </p>
+          </div>
+
+          <span className="text-xs font-bold text-slate-700 bg-slate-100 px-3 py-1 rounded-full self-start sm:self-auto">
+            {factures.length} document(s) disponible(s)
+          </span>
+        </div>
+
+        <div className="overflow-x-auto">
+          <table className="w-full text-left border-collapse text-xs">
+            <thead>
+              <tr className="bg-slate-50 text-slate-600 text-[10px] uppercase tracking-wider border-b border-slate-200 font-bold">
+                <th className="py-3 px-4">N° Facture</th>
+                <th className="py-3 px-4">Date</th>
+                <th className="py-3 px-4">Prestation / Formation</th>
+                <th className="py-3 px-4">Mode & Transaction</th>
+                <th className="py-3 px-4">Montant TTC</th>
+                <th className="py-3 px-4 text-right">Actions</th>
+              </tr>
+            </thead>
+            <tbody className="divide-y divide-slate-100">
+              {factures.map((fac) => (
+                <tr key={fac.id} className="hover:bg-slate-50/80 transition">
+                  <td className="py-3.5 px-4 font-mono font-bold text-blue-950">
+                    {fac.numeroFacture}
+                  </td>
+                  <td className="py-3.5 px-4 text-slate-600">
+                    {fac.dateEmission}
+                  </td>
+                  <td className="py-3.5 px-4 font-semibold text-slate-900 max-w-xs truncate">
+                    {fac.designation}
+                  </td>
+                  <td className="py-3.5 px-4">
+                    <div className="text-slate-800 font-medium">{fac.modePaiement}</div>
+                    <div className="font-mono text-[10px] text-slate-500">{fac.referenceTransaction}</div>
+                  </td>
+                  <td className="py-3.5 px-4 font-mono font-bold text-slate-900">
+                    {fac.montantTotal.toLocaleString('fr-FR')} {fac.devise}
+                  </td>
+                  <td className="py-3.5 px-4 text-right">
+                    <button
+                      onClick={() => setSelectedFacture(fac)}
+                      className="px-3 py-1.5 bg-blue-900 hover:bg-blue-800 text-white font-bold text-xs rounded-xl shadow-xs transition cursor-pointer inline-flex items-center gap-1.5"
+                    >
+                      <Eye className="w-3.5 h-3.5" />
+                      <span>Afficher & Imprimer PDF</span>
+                    </button>
+                  </td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
+      </div>
+
       {/* Selected Certificate Modal */}
       {selectedCert && (
         <CertificateModal
           certification={selectedCert}
           onClose={() => setSelectedCert(null)}
+        />
+      )}
+
+      {/* Selected Invoice Modal */}
+      {selectedFacture && (
+        <InvoiceModal
+          facture={selectedFacture}
+          onClose={() => setSelectedFacture(null)}
         />
       )}
     </div>

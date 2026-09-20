@@ -26,6 +26,11 @@ export const NotesDrawer: React.FC<NotesDrawerProps> = ({
   const [tags, setTags] = useState<string[]>([]);
   const [savedSuccess, setSavedSuccess] = useState<boolean>(false);
   const [copied, setCopied] = useState<boolean>(false);
+  const [noteZoom, setNoteZoom] = useState<number>(100);
+
+  const handleZoomNote = (delta: number) => {
+    setNoteZoom(prev => Math.min(180, Math.max(80, prev + delta)));
+  };
 
   // Initialize or find note for current chapter if available
   useEffect(() => {
@@ -211,17 +216,39 @@ export const NotesDrawer: React.FC<NotesDrawerProps> = ({
 
           {/* Textarea Editor */}
           <div className="flex-1 flex flex-col space-y-2">
-            <label className="text-xs font-bold text-slate-700 uppercase tracking-wider flex items-center justify-between">
-              <span>Contenu de votre note :</span>
+            <div className="flex items-center justify-between text-xs font-bold text-slate-700 uppercase tracking-wider">
+              <div className="flex items-center gap-2">
+                <span>Contenu de votre note :</span>
+                <div className="flex items-center bg-slate-100 rounded-lg p-0.5 border border-slate-200">
+                  <button
+                    type="button"
+                    onClick={() => handleZoomNote(-15)}
+                    className="px-1.5 py-0.5 hover:bg-slate-200 rounded text-[10px] font-bold text-slate-700 transition cursor-pointer"
+                    title="Diminuer la taille"
+                  >
+                    A-
+                  </button>
+                  <span className="px-1 text-[10px] font-mono text-slate-500 font-bold">{noteZoom}%</span>
+                  <button
+                    type="button"
+                    onClick={() => handleZoomNote(15)}
+                    className="px-1.5 py-0.5 hover:bg-slate-200 rounded text-[10px] font-bold text-slate-700 transition cursor-pointer"
+                    title="Agrandir la taille"
+                  >
+                    A+
+                  </button>
+                </div>
+              </div>
               <span className="text-[11px] text-slate-400 font-normal">
                 {content.length} caractères
               </span>
-            </label>
+            </div>
             <textarea
               value={content}
               onChange={(e) => setContent(e.target.value)}
+              style={{ fontSize: `${noteZoom}%` }}
               placeholder="Écrivez vos formules, remarques d'apprentissage, moyens mnémotechniques et questions pour vos futures révisions..."
-              className="w-full flex-1 min-h-[220px] p-4 bg-slate-50 border border-slate-200 rounded-2xl text-xs sm:text-sm text-slate-800 focus:outline-hidden focus:ring-2 focus:ring-blue-600 focus:bg-white transition leading-relaxed resize-none font-sans"
+              className="w-full flex-1 min-h-[220px] p-4 bg-slate-50 border border-slate-200 rounded-2xl text-slate-800 focus:outline-hidden focus:ring-2 focus:ring-blue-600 focus:bg-white transition leading-relaxed resize-none font-sans"
             />
           </div>
 

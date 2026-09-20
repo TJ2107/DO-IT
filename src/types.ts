@@ -16,6 +16,8 @@ export enum Domaine {
   GESTION_PROJET = 11,
   LEADERSHIP_TECHNIQUE = 12,
   LEADERSHIP = 12,
+  ANGLAIS_TOEFL = 13,
+  ANGLAIS = 13,
 }
 
 export enum NiveauDifficulte {
@@ -115,8 +117,11 @@ export interface ErreurRemediation {
 }
 
 export interface ReadingPreferences {
-  fontSize: 'sm' | 'base' | 'lg' | 'xl';
-  theme: 'light' | 'sepia' | 'dark';
+  fontSize: 'sm' | 'base' | 'lg' | 'xl' | '2xl';
+  fontScalePercent?: number; // 85% to 200%
+  lineSpacing?: 'normal' | 'relaxed' | 'loose';
+  fontFamily?: 'sans' | 'serif' | 'opendyslexic';
+  theme: 'light' | 'sepia' | 'dark' | 'high-contrast';
   audioSpeed: number; // 0.8 to 1.5
 }
 
@@ -300,6 +305,84 @@ export interface Badge {
   categorie: 'progression' | 'excellence' | 'vitesse' | 'specialite';
 }
 
+export interface RapportTP {
+  id: string;
+  coursId: string;
+  coursTitre: string;
+  chapitreId?: string;
+  titreTP: string;
+  objectifs: string[];
+  apprenantId: string;
+  apprenantNom: string;
+  apprenantEmail: string;
+  dateSoumission: string;
+  nomFichier?: string;
+  tailleFichier?: string;
+  fichierBase64?: string;
+  contenuRapport: string; // Synthèse rédigée, observations, relevé de mesures, conclusions
+  schemaOuPhotoUrl?: string;
+  statut: 'en_attente' | 'en_cours' | 'corrige' | 'rejet';
+  noteSur20?: number;
+  appreciationFormateur?: string;
+  dateCorrection?: string;
+  nomFormateur?: string;
+  criteresNotation?: {
+    critere: string;
+    bareme: number;
+    note: number;
+    commentaire?: string;
+  }[];
+}
+
+export interface FactureRecu {
+  id: string;
+  numeroFacture: string; // Ex: FACT-DOIT-2026-09-8421
+  dateEmission: string;
+  datePaiement: string;
+  statut: 'Payé & Acquitté' | 'En attente' | 'Annulé';
+  apprenant: {
+    id: string;
+    nom: string;
+    email: string;
+    telephone: string;
+    poste?: string;
+    entreprise?: string;
+  };
+  designation: string;
+  coursTitre?: string;
+  domaineNom?: string;
+  montantHT: number;
+  montantTVA: number;
+  montantTotal: number;
+  devise: 'FCFA' | 'XAF' | 'EUR';
+  modePaiement: string; // Airtel Money (+242 053379774), MTN Mobile Money (+242 069443568), etc.
+  referenceTransaction: string;
+  empreinteSecurite: string;
+  emetteur: {
+    nom: string;
+    slogan: string;
+    adresse: string;
+    contacts: string;
+    rccm: string;
+    nif: string;
+  };
+}
+
+export interface NotificationItem {
+  id: string;
+  type: 'devoir_corrige' | 'certification_disponible' | 'tp_evalue' | 'brevet_disponible' | 'info';
+  title: string;
+  message: string;
+  date: string;
+  read: boolean;
+  linkTab?: string; // 'devoirs' | 'certifs' | 'brevet' | 'cours' | 'correction-ensemble'
+  linkCourseId?: string;
+  linkChapterId?: string;
+  score?: number; // e.g. 17.5/20 or 92%
+  scoreMax?: number; // e.g. 20
+  badgeLabel?: string;
+}
+
 export interface Utilisateur {
   id: string;
   nom: string;
@@ -315,6 +398,9 @@ export interface Utilisateur {
   certifications: Certification[];
   brevetsObtenus?: BrevetProfessionnel[];
   devoirsRendus?: Record<string, SoumissionDevoir>;
+  rapportsTP?: Record<string, RapportTP>;
+  notifications?: NotificationItem[];
+  factures?: FactureRecu[];
   progressionParCours: Record<string, number>; // 0 to 100
   badges: Badge[];
   tempsApprentissageMinutes: number;
@@ -323,11 +409,83 @@ export interface Utilisateur {
 export interface CollaborateurB2B {
   id: string;
   nom: string;
+  email?: string;
+  telephone?: string;
   poste: string;
   departement: string;
   coursAssignes: string[];
   certificationsObtenues: number;
   progressionMoyenne: number;
   scoreMoyen: number;
+  devoirsMoyenneSur20?: number;
+  examenNoteSur20?: number;
+  heuresFormation?: number;
+  dernierAcces?: string;
+  brevetObtenuTitre?: string;
+  empreinteSha256?: string;
   statut: 'Actif' | 'En attente' | 'Certifié';
 }
+
+export interface ProfilEntreprise {
+  raisonSociale: string;
+  siret: string;
+  numeroTva: string;
+  adresse: string;
+  codePostal: string;
+  ville: string;
+  pays: string;
+  contactRHNom: string;
+  contactRHEmail: string;
+  contactRHTel: string;
+  opcoRattachement?: string;
+  effectifTotal?: number;
+}
+
+export interface DevisEntreprise {
+  numeroDevis: string;
+  dateEmission: string;
+  dateValidite: string;
+  entreprise: ProfilEntreprise;
+  formationTitre: string;
+  domaineNom: string;
+  effectifApprenants: number;
+  prixUnitaireHT: number;
+  tauxRemise: number;
+  montantRemiseHT: number;
+  montantTotalHT: number;
+  tauxTVA: number;
+  montantTVA: number;
+  montantTotalTTC: number;
+  optionsIncluses: { nom: string; description: string; montantHT: number }[];
+  modalitesPaiement: string;
+  delaiRealisation: string;
+  statut: 'Brouillon' | 'Validé' | 'Signé' | 'Facturé';
+}
+
+export interface ConventionFormation {
+  numeroConvention: string;
+  dateCreation: string;
+  entreprise: ProfilEntreprise;
+  organisme: {
+    nom: string;
+    declarationActivite: string;
+    siret: string;
+    adresse: string;
+    representant: string;
+  };
+  objetFormation: string;
+  dureeHeuresParStagiaire: number;
+  effectifConcerne: number;
+  modalitesPedagogiques: string;
+  programmeSynthese: string[];
+  coutTotalHT: number;
+  priseEnChargeOpco: boolean;
+  opcoNom?: string;
+  signatures: {
+    organismeSigne: boolean;
+    entrepriseSigne: boolean;
+    dateSignatureEntreprise?: string;
+    nomSignataireEntreprise?: string;
+  };
+}
+

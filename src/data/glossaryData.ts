@@ -225,5 +225,29 @@ export const GLOSSARY_DATA: TermeGlossaire[] = [
     definitionComplete: 'Acronyme en 4 étapes : 1) Décrire les faits objectifs sans juger, 2) Exprimer ses sentiments et l\'impact, 3) Spécifier des solutions constructives, 4) Conclure positivement sur les conséquences mutuelles.',
     exemplePratique: '« J\'ai constaté un décalage de 2 jours sur la livraison de la mise à jour (D). Cela crée une tension avec le client (E). Je propose qu\'on ajuste le périmètre des prochains tickets (S) afin de garantir la sérénité de l\'équipe (C). »',
     motsCles: ['Communication', 'Feedback', 'Assertivité', 'Management', 'Conflit']
+  },
+
+  // ANGLAIS TOEFL
+  {
+    id: 'glo_awl',
+    terme: 'Academic Word List (AWL)',
+    domaine: Domaine.ANGLAIS_TOEFL,
+    domaineNom: 'Anglais TOEFL',
+    definitionCourte: 'Liste de 570 familles de mots à haute fréquence dans la littérature universitaire et scientifique.',
+    definitionComplete: 'Compilée par le Pr. Averil Coxhead (Université de Victoria), l’AWL regroupe les termes transversaux non spécifiques à une seule discipline (ex: analyze, establish, derive, institute) indispensables pour réussir le TOEFL iBT.',
+    exemplePratique: 'La maîtrise de l’AWL permet de débloquer la compréhension de 10% des mots de tout texte académique anglophone.',
+    normeOuReference: 'ETS / Coxhead Academic Word List',
+    motsCles: ['AWL', 'Vocabulaire', 'Académique', 'ETS', 'TOEFL']
+  },
+  {
+    id: 'glo_toefl_integrated',
+    terme: 'Integrated Tasks (Speaking & Writing)',
+    domaine: Domaine.ANGLAIS_TOEFL,
+    domaineNom: 'Anglais TOEFL',
+    definitionCourte: 'Épreuves combinant la lecture d’un texte, l’écoute d’un extrait sonore et la production orale ou écrite synthétique.',
+    definitionComplete: 'Les tâches intégrées évaluent la capacité de l’étudiant à croiser plusieurs sources d’information en anglais académique (ex: résumer la contradiction apportée par un professeur audio à l’encontre d’un texte de lecture).',
+    exemplePratique: 'Au Speaking Task 2, lire une annonce du campus (45s), écouter la réaction de deux étudiants (1 min), puis résumer leur avis à l’oral (60s).',
+    normeOuReference: 'ETS TOEFL iBT Format',
+    motsCles: ['Integrated', 'Speaking', 'Writing', 'Synthèse', 'Audio']
   }
 ];

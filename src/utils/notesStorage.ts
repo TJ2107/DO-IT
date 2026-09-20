@@ -64,6 +64,71 @@ export function deleteNote(id: string): NoteApprenant[] {
   return notes;
 }
 
+export function createChapterCourseNote(coursTitre: string, coursId: string, chapitre: any, domaineNom?: string): NoteApprenant[] {
+  const pts = (chapitre.pointsCles && chapitre.pointsCles.length > 0)
+    ? chapitre.pointsCles.map((p: string) => `  • ${p}`).join('\n')
+    : '  • Assimilation des concepts fondamentaux du chapitre';
+
+  const noteContent = `🎓 FICHE DE COURS & SYNTHÈSE\n` +
+    `----------------------------------------\n` +
+    `📚 Cours : ${coursTitre}\n` +
+    `📌 Chapitre : ${chapitre.titre}\n` +
+    (chapitre.formuleCle ? `💡 Formule / Règle d'or : ${chapitre.formuleCle}\n` : '') +
+    (chapitre.astuceTerrain ? `🛠️ Astuce de terrain : ${chapitre.astuceTerrain}\n` : '') +
+    (chapitre.conseilProfesseur ? `👨‍🏫 Conseil du Professeur : ${chapitre.conseilProfesseur}\n` : '') +
+    `----------------------------------------\n` +
+    `✅ POINTS CLÉS À ASSIMILER :\n${pts}\n\n` +
+    `📝 NOTES PERSONNELLES :\n- `;
+
+  const newNote: NoteApprenant = {
+    id: `note_auto_${coursId}_${chapitre.id}_${Date.now()}`,
+    userId: 'user_123',
+    coursId,
+    coursTitre,
+    chapitreId: chapitre.id,
+    chapitreTitre: chapitre.titre,
+    contenu: noteContent,
+    dateCreation: new Date().toLocaleDateString('fr-FR'),
+    dateMaj: new Date().toLocaleDateString('fr-FR'),
+    tags: [domaineNom || 'Synthese', 'Cours', 'Formules']
+  };
+
+  return saveNote(newNote);
+}
+
+export function createExerciseExplanationNote(
+  coursId: string,
+  coursTitre: string,
+  chapitreId: string,
+  chapitreTitre: string,
+  question: string,
+  bonneReponse: string,
+  explication: string
+): NoteApprenant[] {
+  const noteContent = `💡 NOTE D'EXERCICE & EXPLICATION PÉDAGOGIQUE\n` +
+    `----------------------------------------\n` +
+    `❓ Question : ${question}\n` +
+    `✅ Bonne réponse : ${bonneReponse}\n` +
+    `----------------------------------------\n` +
+    `📘 Explication du Professeur :\n${explication}\n\n` +
+    `📌 Mémoire d'assimilation : À relire avant l'examen.`;
+
+  const newNote: NoteApprenant = {
+    id: `note_ex_${Date.now()}_${Math.random().toString(36).substring(2, 6)}`,
+    userId: 'user_123',
+    coursId,
+    coursTitre,
+    chapitreId,
+    chapitreTitre,
+    contenu: noteContent,
+    dateCreation: new Date().toLocaleDateString('fr-FR'),
+    dateMaj: new Date().toLocaleDateString('fr-FR'),
+    tags: ['Exercice', 'Explication', 'Correction']
+  };
+
+  return saveNote(newNote);
+}
+
 export function exportNotesAsText(notes: NoteApprenant[]): string {
   return notes
     .map(
@@ -78,3 +143,5 @@ export function exportNotesAsText(notes: NoteApprenant[]): string {
     )
     .join('');
 }
+
+

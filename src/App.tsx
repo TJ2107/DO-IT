@@ -20,6 +20,7 @@ import { GlossaryView } from './components/GlossaryView';
 import { RemediationView } from './components/RemediationView';
 import { LoginView } from './components/LoginView';
 import { AdminView } from './components/AdminView';
+import { OnboardingGuideModal } from './components/OnboardingGuideModal';
 
 export default function App() {
   const [user, setUser] = useState<Utilisateur>(loadUserData);
@@ -28,6 +29,7 @@ export default function App() {
   const [selectedCourse, setSelectedCourse] = useState<Cours>(COURSES_DATA[0]);
   const [examCourse, setExamCourse] = useState<Cours | null>(null);
   const [modalCert, setModalCert] = useState<Certification | null>(null);
+  const [showGuideModal, setShowGuideModal] = useState<boolean>(false);
 
   // Sync with local storage
   const handleUpdateUser = (updated: Utilisateur) => {
@@ -58,6 +60,13 @@ export default function App() {
           handleUpdateUser(updatedUser);
           if (updatedUser.role === 'admin') {
             setActiveTab('admin');
+          } else {
+            // Automatically open guide for learners on login if not seen
+            const hasSeenGuide = localStorage.getItem('doit_has_seen_guide');
+            if (!hasSeenGuide) {
+              setShowGuideModal(true);
+              localStorage.setItem('doit_has_seen_guide', 'true');
+            }
           }
           setIsAuthenticated(true);
         }}
@@ -70,6 +79,16 @@ export default function App() {
     setActiveTab('catalogue');
   }
 
+  const handleNavigateFromNotification = (tab: string, courseId?: string) => {
+    if (courseId) {
+      const foundCourse = COURSES_DATA.find(c => c.id === courseId);
+      if (foundCourse) {
+        setSelectedCourse(foundCourse);
+      }
+    }
+    setActiveTab(tab);
+  };
+
   return (
     <div className="min-h-screen bg-slate-100 text-slate-900 flex flex-col selection:bg-amber-300 selection:text-slate-950">
       {/* Header */}
@@ -78,7 +97,9 @@ export default function App() {
         onUpdateUser={handleUpdateUser}
         activeTab={activeTab}
         onSelectTab={setActiveTab}
+        onNavigateTo={handleNavigateFromNotification}
         onLogout={() => setIsAuthenticated(false)}
+        onOpenGuide={() => setShowGuideModal(true)}
       />
 
       {/* Navigation Tabs */}
@@ -107,6 +128,9 @@ export default function App() {
             onUpdateUser={handleUpdateUser}
             onStartExam={handleStartExam}
             onBackToCatalogue={() => setActiveTab('catalogue')}
+            onOpenHomework={() => setActiveTab('devoirs')}
+            onOpenCollectiveCorrection={() => setActiveTab('correction-ensemble')}
+            onOpenBrevet={() => setActiveTab('brevet')}
           />
         )}
 
@@ -158,7 +182,14 @@ export default function App() {
           <FlashcardsView
             user={user}
             onUpdateUser={handleUpdateUser}
-            onOpenCourse={handleSelectCourse}
+            onOpenCourse={(coursIdOrCourse: any) => {
+              if (typeof coursIdOrCourse === 'string') {
+                const c = COURSES_DATA.find(item => item.id === coursIdOrCourse);
+                if (c) handleSelectCourse(c);
+              } else if (coursIdOrCourse && coursIdOrCourse.id) {
+                handleSelectCourse(coursIdOrCourse);
+              }
+            }}
           />
         )}
 
@@ -215,6 +246,13 @@ export default function App() {
           onClose={() => setModalCert(null)}
         />
       )}
+
+      {/* Guide Visuel Pas à Pas Modal */}
+      <OnboardingGuideModal
+        isOpen={showGuideModal}
+        onClose={() => setShowGuideModal(false)}
+        onExploreCatalogue={() => setActiveTab('catalogue')}
+      />
 
       {/* Footer */}
       <footer className="bg-slate-900 text-slate-400 py-8 border-t border-slate-800 text-xs mt-auto print:hidden">

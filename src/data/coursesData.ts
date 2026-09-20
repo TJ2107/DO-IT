@@ -11,6 +11,7 @@ import { COURSE_COMPTABILITE } from './courses/comptabilite';
 import { COURSE_COMPLIANCE } from './courses/compliance';
 import { COURSE_GESTION_PROJET } from './courses/gestionProjet';
 import { COURSE_LEADERSHIP } from './courses/leadership';
+import { COURSE_ANGLAIS_TOEFL } from './courses/anglaisToefl';
 
 export const COURSES_DATA: Cours[] = [
   COURSE_ELECTRICITE,
@@ -24,5 +25,6 @@ export const COURSES_DATA: Cours[] = [
   COURSE_COMPTABILITE,
   COURSE_COMPLIANCE,
   COURSE_GESTION_PROJET,
-  COURSE_LEADERSHIP
+  COURSE_LEADERSHIP,
+  COURSE_ANGLAIS_TOEFL
 ];

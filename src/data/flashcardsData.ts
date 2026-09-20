@@ -130,5 +130,40 @@ export const FLASHCARDS_DATA: FlashcardItem[] = [
     verso: 'D : Décrire les faits objectifs\nE : Exprimer ses émotions et conséquences\nS : Spécifier des solutions concrètes\nC : Conclure positivement sur les bénéfices mutuels',
     astuce: 'Faits sans jugement -> Ressenti -> Solution -> Gagnant-gagnant.',
     maitrise: 'non_vu'
+  },
+
+  // Anglais TOEFL
+  {
+    id: 'fc_toefl_1',
+    coursId: 'toefl_101',
+    domaine: Domaine.ANGLAIS_TOEFL,
+    domaineNom: 'Anglais TOEFL',
+    chapitreTitre: '2. Reading Section - Skimming & Scanning',
+    recto: 'What is the main difference between Skimming and Scanning in the TOEFL Reading section?',
+    verso: '• Skimming = Reading quickly for the main idea and overall structure (topic sentences).\n• Scanning = Searching rapidly for specific keywords (dates, names, scientific terms).',
+    astuce: 'Skimming gives the map, Scanning finds the treasure.',
+    maitrise: 'non_vu'
+  },
+  {
+    id: 'fc_toefl_2',
+    coursId: 'toefl_101',
+    domaine: Domaine.ANGLAIS_TOEFL,
+    domaineNom: 'Anglais TOEFL',
+    chapitreTitre: '9. Speaking Task 1 - Independent Speaking',
+    recto: 'What is the recommended time allocation for Speaking Task 1?',
+    verso: '• 15 seconds to prepare\n• 45 seconds to record your speech',
+    astuce: 'State your choice immediately in the first 5 seconds.',
+    maitrise: 'non_vu'
+  },
+  {
+    id: 'fc_toefl_3',
+    coursId: 'toefl_101',
+    domaine: Domaine.ANGLAIS_TOEFL,
+    domaineNom: 'Anglais TOEFL',
+    chapitreTitre: '11. Writing Task 1 - Integrated Essay',
+    recto: 'What is the core structure of the TOEFL Integrated Writing essay?',
+    verso: 'Contrasting the 3 main points of the reading passage with the 3 counter-arguments presented in the professor\'s lecture (180-220 words in 20 minutes).',
+    astuce: 'Never express your personal opinion in Task 1!',
+    maitrise: 'non_vu'
   }
 ];

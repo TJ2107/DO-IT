@@ -2,9 +2,11 @@ import React, { useState, useEffect } from 'react';
 import { Cours, Utilisateur, Exercice, Certification, TypeQuestion } from '../types';
 import { createCertificationRecord, formatNiveau } from '../utils/storage';
 import { recordError } from '../utils/remediationStorage';
+import { createExerciseExplanationNote, createChapterCourseNote } from '../utils/notesStorage';
+import { createCertificationReadyNotification, addNotificationToUser } from '../utils/notificationService';
 import { 
   Award, Clock, CheckCircle2, AlertTriangle, ArrowLeft, ArrowRight, 
-  RotateCcw, Sparkles, ShieldCheck, Download, HelpCircle, Check, X
+  RotateCcw, Sparkles, ShieldCheck, Download, HelpCircle, Check, X, BookmarkCheck, FileText 
 } from 'lucide-react';
 import confetti from 'canvas-confetti';
 
@@ -30,6 +32,7 @@ export const TestViewer: React.FC<TestViewerProps> = ({
   const [userAnswers, setUserAnswers] = useState<Record<string, number>>({});
   const [timeLeftSec, setTimeLeftSec] = useState(15 * 60); // 15 minutes
   const [isSubmitted, setIsSubmitted] = useState(false);
+  const [noteToast, setNoteToast] = useState<string | null>(null);
   const [testResult, setTestResult] = useState<{
     score: number;
     scorePercent: number;
@@ -38,6 +41,57 @@ export const TestViewer: React.FC<TestViewerProps> = ({
     pointsTotal: number;
     certification?: Certification;
   } | null>(null);
+
+  const triggerNoteToast = (msg: string) => {
+    setNoteToast(msg);
+    setTimeout(() => setNoteToast(null), 3500);
+  };
+
+  const handleSaveQuestionNote = (q: Exercice) => {
+    const bonneReponse = q.reponsesCorrectes.map((i) => q.reponsesPossibles[i]).join(' OU ');
+    createExerciseExplanationNote(
+      course.id,
+      course.titre,
+      'examen_final',
+      'Examen Certifiant',
+      q.question,
+      bonneReponse,
+      q.explication
+    );
+    triggerNoteToast(`📌 Explication de la question enregistrée dans vos Notes !`);
+  };
+
+  const handleGenerateExamReviewNote = () => {
+    // Collect all missed or key questions into a single note
+    const summaryList = questions.map((q, idx) => {
+      const bonneRep = q.reponsesCorrectes.map((i) => q.reponsesPossibles[i]).join(' OU ');
+      return `Q${idx + 1}. ${q.question}\n   ✅ Réponse : ${bonneRep}\n   💡 Explication : ${q.explication}\n`;
+    }).join('\n');
+
+    const noteContent = `🏆 CARNET DE RÉVISION POST-EXAMEN\n` +
+      `----------------------------------------\n` +
+      `📚 Cours : ${course.titre}\n` +
+      `📊 Score obtenu : ${testResult?.scorePercent || 0}%\n` +
+      `----------------------------------------\n` +
+      `📝 CORRECTION & NOTIONS DU TEST :\n\n${summaryList}`;
+
+    const newNote = {
+      id: `note_exam_review_${course.id}_${Date.now()}`,
+      userId: user.id,
+      coursId: course.id,
+      coursTitre: course.titre,
+      chapitreId: 'examen_final',
+      chapitreTitre: 'Révision Examen Final',
+      contenu: noteContent,
+      dateCreation: new Date().toLocaleDateString('fr-FR'),
+      dateMaj: new Date().toLocaleDateString('fr-FR'),
+      tags: ['Examen', 'Révision', 'Synthese']
+    };
+
+    const { saveNote } = require('../utils/notesStorage');
+    saveNote(newNote);
+    triggerNoteToast(`📚 Carnet de révision complet de l'examen enregistré dans vos Notes !`);
+  };
 
   // Timer effect
   useEffect(() => {
@@ -133,7 +187,15 @@ export const TestViewer: React.FC<TestViewerProps> = ({
         ? user.coursTermines
         : [...user.coursTermines, course.id];
 
-      onUpdateUser({
+      // Create a certification available notification
+      const notif = createCertificationReadyNotification(
+        course.titre,
+        newCert.mention || 'Validé',
+        scoreRatio,
+        course.id
+      );
+
+      const baseUpdatedUser: Utilisateur = {
         ...user,
         xp: newXp,
         niveauGlobal: newLevel,
@@ -144,7 +206,11 @@ export const TestViewer: React.FC<TestViewerProps> = ({
           ...user.progressionParCours,
           [course.id]: 100,
         },
-      });
+      };
+
+      const finalUpdatedUser = addNotificationToUser(baseUpdatedUser, notif);
+
+      onUpdateUser(finalUpdatedUser);
 
       confetti({
         particleCount: 100,
@@ -193,6 +259,16 @@ export const TestViewer: React.FC<TestViewerProps> = ({
 
   return (
     <div className="max-w-4xl mx-auto space-y-6">
+      {/* Toast banner */}
+      {noteToast && (
+        <div className="bg-emerald-900 text-white p-3.5 rounded-2xl shadow-lg border border-emerald-700 text-xs sm:text-sm font-bold flex items-center justify-between animate-in fade-in duration-200">
+          <div className="flex items-center gap-2">
+            <span className="text-lg">📝</span>
+            <span>{noteToast}</span>
+          </div>
+        </div>
+      )}
+
       {/* Top Bar with Timer & Course Info */}
       <div className="bg-white rounded-2xl p-5 border border-slate-200 shadow-xs flex flex-col sm:flex-row items-center justify-between gap-4">
         <div className="flex items-center gap-3">
@@ -401,6 +477,15 @@ export const TestViewer: React.FC<TestViewerProps> = ({
             )}
 
             <button
+              onClick={handleGenerateExamReviewNote}
+              className="px-5 py-3 bg-amber-100 hover:bg-amber-200 text-amber-950 text-xs sm:text-sm font-bold rounded-xl border border-amber-300 flex items-center gap-2 transition cursor-pointer"
+              title="Créer une fiche de révision globale avec toutes les questions et explications de l'examen"
+            >
+              <Sparkles className="w-4 h-4 text-amber-600" />
+              <span>📚 Générer Carnet de Révision d'Examen</span>
+            </button>
+
+            <button
               onClick={handleRetakeTest}
               className="px-5 py-3 bg-white hover:bg-slate-100 text-slate-800 text-xs sm:text-sm font-bold rounded-xl border border-slate-300 flex items-center gap-2 transition cursor-pointer"
             >
@@ -418,9 +503,18 @@ export const TestViewer: React.FC<TestViewerProps> = ({
 
           {/* Question by Question Detailed Correction */}
           <div className="pt-6 border-t border-slate-200 space-y-4">
-            <h4 className="text-sm font-bold text-slate-900 uppercase tracking-wider">
-              Correction détaillée question par question
-            </h4>
+            <div className="flex items-center justify-between">
+              <h4 className="text-sm font-bold text-slate-900 uppercase tracking-wider">
+                Correction détaillée question par question
+              </h4>
+              <button
+                onClick={handleGenerateExamReviewNote}
+                className="text-xs font-bold text-blue-900 hover:text-blue-950 underline flex items-center gap-1 cursor-pointer"
+              >
+                <BookmarkCheck className="w-3.5 h-3.5 text-blue-600" />
+                <span>Tout ajouter à mes Notes</span>
+              </button>
+            </div>
 
             <div className="space-y-3">
               {questions.map((q, idx) => {
@@ -436,11 +530,21 @@ export const TestViewer: React.FC<TestViewerProps> = ({
                   >
                     <div className="flex items-center justify-between font-bold">
                       <span className="text-slate-800">Q{idx + 1}. {q.question}</span>
-                      <span className={`px-2 py-0.5 rounded text-xs font-bold ${
-                        isCorrect ? 'bg-emerald-200 text-emerald-900' : 'bg-rose-200 text-rose-900'
-                      }`}>
-                        {isCorrect ? `+${q.points} pts` : '0 pt'}
-                      </span>
+                      <div className="flex items-center gap-2">
+                        <span className={`px-2 py-0.5 rounded text-xs font-bold ${
+                          isCorrect ? 'bg-emerald-200 text-emerald-900' : 'bg-rose-200 text-rose-900'
+                        }`}>
+                          {isCorrect ? `+${q.points} pts` : '0 pt'}
+                        </span>
+                        <button
+                          onClick={() => handleSaveQuestionNote(q)}
+                          className="px-2 py-1 bg-white hover:bg-slate-100 text-slate-800 border border-slate-300 rounded text-[11px] font-bold flex items-center gap-1 transition cursor-pointer"
+                          title="Enregistrer cette question et son explication dans mes Notes"
+                        >
+                          <BookmarkCheck className="w-3 h-3 text-blue-600" />
+                          <span>Note</span>
+                        </button>
+                      </div>
                     </div>
 
                     <div className="text-xs space-y-1 text-slate-600">

@@ -12,35 +12,85 @@ interface BrevetViewProps {
 export const BrevetView: React.FC<BrevetViewProps> = ({
   cours,
   utilisateur,
-  onBackToCourse
+  onBackToCourse,
+  onSelectOtherCourse
 }) => {
   const brevetRef = useRef<HTMLDivElement>(null);
+  const [showDemoPreview, setShowDemoPreview] = React.useState<boolean>(false);
   const userBrevets: BrevetProfessionnel[] = utilisateur.brevetsObtenus || [];
-  const currentBrevet = userBrevets.find(b => b.coursId === cours.id) || userBrevets[0];
+  const existingBrevet = userBrevets.find(b => b.coursId === cours.id) || userBrevets[0];
 
   const handlePrint = () => {
     window.print();
   };
 
+  const sampleBrevet: BrevetProfessionnel = {
+    id: `brevet_demo_${cours.id}`,
+    numeroOfficiel: `BP-FR-${cours.domaine}-2026-DEMO`,
+    numeroEnregistrement: `BP-FR-${cours.domaine}-2026-DEMO`,
+    intituleBrevet: cours.titreBrevet || `Brevet Professionnel Supérieur - ${cours.titre}`,
+    titreBrevet: cours.titreBrevet || `Brevet Professionnel Supérieur - ${cours.titre}`,
+    domaine: cours.domaine,
+    domaineNom: cours.domaineNom,
+    specialite: cours.domaineNom,
+    coursId: cours.id,
+    coursTitre: cours.titre,
+    userId: utilisateur.id,
+    userName: utilisateur.nom || 'Jean Dupont',
+    nomApprenant: utilisateur.nom || 'Jean Dupont',
+    dateDelivrance: new Date().toLocaleDateString('fr-FR'),
+    dateObtention: new Date().toISOString(),
+    mention: 'Très Bien',
+    noteGlobaleSur20: 16.8,
+    moyennePonderee: 16.8,
+    empreinteSha256: 'e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855',
+    empreinteCryptographique: 'e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855',
+    competencesValidees: cours.competences || [
+      'Gouvernance & Conformité des Processus',
+      'Calculs & Dimensionnement Industriel',
+      'Diagnostic & Résolution de Problèmes',
+      'Respect des Normes Européennes et Françaises'
+    ],
+    valide: true
+  };
+
+  const currentBrevet = existingBrevet || (showDemoPreview ? sampleBrevet : null);
+
   if (!currentBrevet) {
     return (
-      <div className="max-w-4xl mx-auto p-8 text-center bg-white rounded-3xl border border-slate-200 shadow-sm">
-        <Award className="w-16 h-16 text-amber-500 mx-auto mb-4" />
-        <h2 className="text-2xl font-bold text-slate-900 mb-2">Certificat Professionnel en attente</h2>
-        <p className="text-slate-600 max-w-md mx-auto mb-6">
-          Pour obtenir votre certificat officiel et votre brevet sécurisé SHA-256, vous devez valider les 15 chapitres, les devoirs maison et l'examen final avec une note pondérée supérieure ou égale à 10/20.
-        </p>
-        <button
-          onClick={onBackToCourse}
-          className="px-6 py-3 bg-blue-900 text-white rounded-xl font-bold hover:bg-blue-800 transition-colors cursor-pointer"
-        >
-          Reprendre ma formation
-        </button>
+      <div className="max-w-4xl mx-auto p-6 sm:p-10 text-center bg-white rounded-3xl border border-slate-200 shadow-sm space-y-6 animate-in fade-in duration-300">
+        <div className="w-20 h-20 bg-amber-50 border-2 border-amber-300 rounded-full flex items-center justify-center mx-auto text-amber-600 shadow-inner">
+          <Award className="w-10 h-10" />
+        </div>
+        <div className="space-y-2">
+          <h2 className="text-2xl sm:text-3xl font-black text-slate-900">
+            Certificat & Brevet Professionnel
+          </h2>
+          <p className="text-slate-600 max-w-lg mx-auto text-sm sm:text-base">
+            Pour obtenir votre Brevet Officiel sécurisé par empreinte SHA-256 pour <strong>{cours.titre}</strong>, complétez les 15 chapitres, les devoirs notés et l'examen final.
+          </p>
+        </div>
+
+        <div className="flex flex-wrap items-center justify-center gap-3 pt-2">
+          <button
+            onClick={onBackToCourse}
+            className="px-6 py-3 bg-blue-900 text-white rounded-xl font-bold hover:bg-blue-800 transition-colors shadow-sm cursor-pointer text-sm"
+          >
+            Reprendre les 15 Chapitres
+          </button>
+          <button
+            onClick={() => setShowDemoPreview(true)}
+            className="px-6 py-3 bg-amber-50 text-amber-900 border border-amber-300 hover:bg-amber-100 rounded-xl font-bold transition-colors cursor-pointer text-sm flex items-center gap-2"
+          >
+            <Sparkles className="w-4 h-4 text-amber-600" />
+            <span>Aperçu du Modèle Officiel de Brevet</span>
+          </button>
+        </div>
       </div>
     );
   }
 
-  const dateDelivrance = new Date(currentBrevet.dateObtention).toLocaleDateString('fr-FR', {
+  const dateDelivrance = new Date(currentBrevet.dateObtention || currentBrevet.dateDelivrance || new Date()).toLocaleDateString('fr-FR', {
     day: 'numeric',
     month: 'long',
     year: 'numeric'
@@ -156,7 +206,7 @@ export const BrevetView: React.FC<BrevetViewProps> = ({
             Compétences Maîtrisées & Validées par le Jury
           </span>
           <div className="flex flex-wrap items-center justify-center gap-2 max-w-3xl mx-auto">
-            {currentBrevet.competencesValidees.map((comp, idx) => (
+            {(currentBrevet.competencesValidees || []).map((comp, idx) => (
               <span 
                 key={idx}
                 className="text-[11px] font-sans bg-emerald-50 text-emerald-900 border border-emerald-300 px-3 py-1 rounded-full font-medium flex items-center gap-1.5"
@@ -176,9 +226,9 @@ export const BrevetView: React.FC<BrevetViewProps> = ({
               <Calendar className="w-4 h-4 text-amber-700" />
               <span>Délivré le {dateDelivrance}</span>
             </div>
-            <p>Numéro d'enregistrement : <strong className="font-mono text-slate-900">{currentBrevet.numeroEnregistrement}</strong></p>
+            <p>Numéro d'enregistrement : <strong className="font-mono text-slate-900">{currentBrevet.numeroEnregistrement || currentBrevet.numeroOfficiel}</strong></p>
             <p className="font-mono text-[10px] text-slate-400 break-all max-w-xs">
-              Empreinte SHA-256 : {currentBrevet.empreinteCryptographique.substring(0, 32)}...
+              Empreinte SHA-256 : {(currentBrevet.empreinteCryptographique || currentBrevet.empreinteSha256 || 'SHA256-DOIT-SECURITY-VALID').substring(0, 32)}...
             </p>
           </div>
 

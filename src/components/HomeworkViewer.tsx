@@ -1,7 +1,25 @@
 import React, { useState } from 'react';
 import { Cours, DevoirMaison, SoumissionDevoir, Utilisateur } from '../types';
-import { FileText, CheckCircle, AlertCircle, Sparkles, Trophy, ArrowRight, RotateCcw, Clock, BookOpen, GraduationCap, Award } from 'lucide-react';
+import { 
+  FileText, 
+  CheckCircle, 
+  AlertCircle, 
+  Sparkles, 
+  Trophy, 
+  ArrowRight, 
+  RotateCcw, 
+  Clock, 
+  BookOpen, 
+  GraduationCap, 
+  Award,
+  FileCode,
+  Download,
+  WifiOff
+} from 'lucide-react';
 import { saveUser } from '../utils/storage';
+import { TPReportSection } from './TPReportSection';
+import { OfflineCoursePack } from './OfflineCoursePack';
+import { createHomeworkGradedNotification, addNotificationToUser } from '../utils/notificationService';
 
 interface HomeworkViewerProps {
   cours: Cours;
@@ -18,6 +36,7 @@ export const HomeworkViewer: React.FC<HomeworkViewerProps> = ({
   onNavigateToCollectiveCorrection,
   onBackToCourse
 }) => {
+  const [activeSubTab, setActiveSubTab] = useState<'devoirs' | 'tp' | 'offline'>('devoirs');
   const devoirs = cours.devoirs || [];
   const [selectedDevoirId, setSelectedDevoirId] = useState<string>(devoirs[0]?.id || '');
   
@@ -28,8 +47,13 @@ export const HomeworkViewer: React.FC<HomeworkViewerProps> = ({
   const [answers, setAnswers] = useState<Record<string, number>>({});
   const [submitted, setSubmitted] = useState<boolean>(!!existingSubmission);
   const [currentResult, setCurrentResult] = useState<SoumissionDevoir | null>(existingSubmission || null);
+  const [homeworkZoom, setHomeworkZoom] = useState<number>(100);
 
-  if (!currentDevoir) {
+  const handleZoom = (delta: number) => {
+    setHomeworkZoom(prev => Math.min(180, Math.max(80, prev + delta)));
+  };
+
+  if (!currentDevoir && activeSubTab === 'devoirs') {
     return (
       <div className="max-w-4xl mx-auto p-8 text-center bg-white rounded-2xl border border-slate-200 shadow-xs">
         <FileText className="w-12 h-12 text-slate-400 mx-auto mb-3" />
@@ -103,14 +127,24 @@ export const HomeworkViewer: React.FC<HomeworkViewerProps> = ({
       valide: isValide
     };
 
-    const updatedUser: Utilisateur = {
+    // Create a graded homework notification
+    const notif = createHomeworkGradedNotification(
+      cours.titre,
+      currentDevoir.titre,
+      noteSur20,
+      cours.id
+    );
+
+    const updatedUserBase: Utilisateur = {
       ...utilisateur,
       devoirsRendus: {
         ...(utilisateur.devoirsRendus || {}),
         [submissionKey]: nouvelleSoumission
       },
-      pointsExperience: utilisateur.pointsExperience + (isValide ? 150 : 50)
+      pointsExperience: (utilisateur.pointsExperience || 0) + (isValide ? 150 : 50)
     };
+
+    const updatedUser = addNotificationToUser(updatedUserBase, notif);
 
     setCurrentResult(nouvelleSoumission);
     setSubmitted(true);
@@ -122,93 +156,146 @@ export const HomeworkViewer: React.FC<HomeworkViewerProps> = ({
 
   return (
     <div className="max-w-5xl mx-auto px-4 py-8 space-y-8">
-      {/* Header & Sub-Navigation */}
-      <div className="bg-gradient-to-r from-blue-950 via-slate-900 to-indigo-950 rounded-3xl p-6 sm:p-8 text-white shadow-xl relative overflow-hidden">
-        <div className="absolute right-0 top-0 w-96 h-96 bg-blue-500/10 rounded-full blur-3xl pointer-events-none" />
-        
-        <div className="flex flex-wrap items-center justify-between gap-4 mb-4">
-          <div className="flex items-center gap-2 text-xs font-semibold uppercase tracking-wider text-amber-400 bg-amber-400/10 px-3 py-1 rounded-full border border-amber-400/20">
-            <GraduationCap className="w-4 h-4" />
-            <span>Devoir Maison Certifiant • {cours.titre}</span>
-          </div>
+      {/* Sub-Mode Selector Navigation */}
+      <div className="flex flex-wrap items-center gap-2 p-1.5 bg-slate-100/90 rounded-2xl border border-slate-200">
+        <button
+          onClick={() => setActiveSubTab('devoirs')}
+          className={`flex-1 min-w-[200px] flex items-center justify-center gap-2 py-3 px-4 rounded-xl text-xs sm:text-sm font-bold transition-all cursor-pointer ${
+            activeSubTab === 'devoirs'
+              ? 'bg-blue-900 text-white shadow-sm'
+              : 'text-slate-600 hover:text-slate-900 hover:bg-white/60'
+          }`}
+        >
+          <FileText className="w-4 h-4" />
+          <span>1. Devoir Maison & Calculs</span>
+        </button>
 
-          <div className="flex items-center gap-3">
-            <button
-              onClick={onBackToCourse}
-              className="text-xs text-slate-300 hover:text-white px-3 py-1.5 rounded-lg border border-slate-700 hover:bg-slate-800 transition-colors flex items-center gap-1.5"
-            >
-              <BookOpen className="w-3.5 h-3.5" />
-              Retour au cours
-            </button>
-            <button
-              onClick={onNavigateToCollectiveCorrection}
-              className="text-xs bg-amber-400 text-slate-950 font-bold px-3 py-1.5 rounded-lg hover:bg-amber-300 transition-colors flex items-center gap-1.5 shadow-xs"
-            >
-              <Trophy className="w-3.5 h-3.5" />
-              Correction d’ensemble
-            </button>
-          </div>
-        </div>
+        <button
+          onClick={() => setActiveSubTab('tp')}
+          className={`flex-1 min-w-[200px] flex items-center justify-center gap-2 py-3 px-4 rounded-xl text-xs sm:text-sm font-bold transition-all cursor-pointer ${
+            activeSubTab === 'tp'
+              ? 'bg-blue-900 text-white shadow-sm'
+              : 'text-slate-600 hover:text-slate-900 hover:bg-white/60'
+          }`}
+        >
+          <FileCode className="w-4 h-4 text-amber-400" />
+          <span>2. Rapport de TP & Fichiers (Correction Formateur)</span>
+        </button>
 
-        <h1 className="text-2xl sm:text-3xl font-bold tracking-tight text-white mb-2">
-          {currentDevoir.titre}
-        </h1>
-        <p className="text-slate-300 text-sm sm:text-base max-w-3xl leading-relaxed">
-          {currentDevoir.description}
-        </p>
-
-        {/* Badges Bar */}
-        <div className="flex flex-wrap items-center gap-4 mt-6 pt-4 border-t border-slate-800/80 text-xs text-slate-300">
-          <div className="flex items-center gap-1.5">
-            <Clock className="w-4 h-4 text-amber-400" />
-            <span>Durée estimée : <strong>{currentDevoir.dureeEstimeeMin} min</strong></span>
-          </div>
-          <div className="flex items-center gap-1.5">
-            <Award className="w-4 h-4 text-emerald-400" />
-            <span>Barème : <strong>/{currentDevoir.noteMax} pts</strong> (Coeff. {currentDevoir.coefficient})</span>
-          </div>
-          <div className="flex items-center gap-1.5">
-            <BookOpen className="w-4 h-4 text-blue-400" />
-            <span>Périmètre : <strong>{currentDevoir.chapitresCouverts}</strong></span>
-          </div>
-        </div>
+        <button
+          onClick={() => setActiveSubTab('offline')}
+          className={`flex-1 min-w-[180px] flex items-center justify-center gap-2 py-3 px-4 rounded-xl text-xs sm:text-sm font-bold transition-all cursor-pointer ${
+            activeSubTab === 'offline'
+              ? 'bg-blue-900 text-white shadow-sm'
+              : 'text-slate-600 hover:text-slate-900 hover:bg-white/60'
+          }`}
+        >
+          <Download className="w-4 h-4 text-emerald-400" />
+          <span>3. Cursus Hors-Ligne & Fiches PDF</span>
+        </button>
       </div>
 
-      {/* Multiple Devoirs Tabs if more than 1 */}
-      {devoirs.length > 1 && (
-        <div className="flex gap-2 border-b border-slate-200 pb-2 overflow-x-auto">
-          {devoirs.map((dev) => {
-            const key = `${cours.id}_${dev.id}`;
-            const isDone = !!utilisateur.devoirsRendus?.[key];
-            const isSelected = dev.id === currentDevoir.id;
-            return (
-              <button
-                key={dev.id}
-                onClick={() => {
-                  setSelectedDevoirId(dev.id);
-                  const sub = utilisateur.devoirsRendus?.[key];
-                  if (sub) {
-                    setCurrentResult(sub);
-                    setSubmitted(true);
-                  } else {
-                    handleReset();
-                  }
-                }}
-                className={`px-4 py-2.5 rounded-xl text-sm font-semibold flex items-center gap-2 transition-all ${
-                  isSelected
-                    ? 'bg-blue-900 text-white shadow-sm'
-                    : 'bg-white text-slate-700 border border-slate-200 hover:bg-slate-50'
-                }`}
-              >
-                <span>Devoir n°{dev.numero}</span>
-                {isDone && (
-                  <CheckCircle className={`w-4 h-4 ${isSelected ? 'text-emerald-400' : 'text-emerald-600'}`} />
-                )}
-              </button>
-            );
-          })}
-        </div>
+      {activeSubTab === 'tp' && (
+        <TPReportSection
+          cours={cours}
+          utilisateur={utilisateur}
+          onUpdateUser={onUpdateUser}
+        />
       )}
+
+      {activeSubTab === 'offline' && (
+        <OfflineCoursePack course={cours} />
+      )}
+
+      {activeSubTab === 'devoirs' && currentDevoir && (
+        <div className="space-y-8">
+          {/* Header & Sub-Navigation */}
+          <div className="bg-gradient-to-r from-blue-950 via-slate-900 to-indigo-950 rounded-3xl p-6 sm:p-8 text-white shadow-xl relative overflow-hidden">
+            <div className="absolute right-0 top-0 w-96 h-96 bg-blue-500/10 rounded-full blur-3xl pointer-events-none" />
+            
+            <div className="flex flex-wrap items-center justify-between gap-4 mb-4">
+              <div className="flex items-center gap-2 text-xs font-semibold uppercase tracking-wider text-amber-400 bg-amber-400/10 px-3 py-1 rounded-full border border-amber-400/20">
+                <GraduationCap className="w-4 h-4" />
+                <span>Devoir Maison Certifiant • {cours.titre}</span>
+              </div>
+
+              <div className="flex items-center gap-3">
+                <button
+                  onClick={onBackToCourse}
+                  className="text-xs text-slate-300 hover:text-white px-3 py-1.5 rounded-lg border border-slate-700 hover:bg-slate-800 transition-colors flex items-center gap-1.5 cursor-pointer"
+                >
+                  <BookOpen className="w-3.5 h-3.5" />
+                  Retour au cours
+                </button>
+                <button
+                  onClick={onNavigateToCollectiveCorrection}
+                  className="text-xs bg-amber-400 text-slate-950 font-bold px-3 py-1.5 rounded-lg hover:bg-amber-300 transition-colors flex items-center gap-1.5 shadow-xs cursor-pointer"
+                >
+                  <Trophy className="w-3.5 h-3.5" />
+                  Correction d’ensemble
+                </button>
+              </div>
+            </div>
+
+            <h1 className="text-2xl sm:text-3xl font-bold tracking-tight text-white mb-2">
+              {currentDevoir.titre}
+            </h1>
+            <p className="text-slate-300 text-sm sm:text-base max-w-3xl leading-relaxed">
+              {currentDevoir.description}
+            </p>
+
+            {/* Badges Bar */}
+            <div className="flex flex-wrap items-center gap-4 mt-6 pt-4 border-t border-slate-800/80 text-xs text-slate-300">
+              <div className="flex items-center gap-1.5">
+                <Clock className="w-4 h-4 text-amber-400" />
+                <span>Durée estimée : <strong>{currentDevoir.dureeEstimeeMin} min</strong></span>
+              </div>
+              <div className="flex items-center gap-1.5">
+                <Award className="w-4 h-4 text-emerald-400" />
+                <span>Barème : <strong>/{currentDevoir.noteMax} pts</strong> (Coeff. {currentDevoir.coefficient})</span>
+              </div>
+              <div className="flex items-center gap-1.5">
+                <BookOpen className="w-4 h-4 text-blue-400" />
+                <span>Périmètre : <strong>{currentDevoir.chapitresCouverts}</strong></span>
+              </div>
+            </div>
+          </div>
+
+          {/* Multiple Devoirs Tabs if more than 1 */}
+          {devoirs.length > 1 && (
+            <div className="flex gap-2 border-b border-slate-200 pb-2 overflow-x-auto">
+              {devoirs.map((dev) => {
+                const key = `${cours.id}_${dev.id}`;
+                const isDone = !!utilisateur.devoirsRendus?.[key];
+                const isSelected = dev.id === currentDevoir.id;
+                return (
+                  <button
+                    key={dev.id}
+                    onClick={() => {
+                      setSelectedDevoirId(dev.id);
+                      const sub = utilisateur.devoirsRendus?.[key];
+                      if (sub) {
+                        setCurrentResult(sub);
+                        setSubmitted(true);
+                      } else {
+                        handleReset();
+                      }
+                    }}
+                    className={`px-4 py-2.5 rounded-xl text-sm font-semibold flex items-center gap-2 transition-all cursor-pointer ${
+                      isSelected
+                        ? 'bg-blue-900 text-white shadow-sm'
+                        : 'bg-white text-slate-700 border border-slate-200 hover:bg-slate-50'
+                    }`}
+                  >
+                    <span>Devoir n°{dev.numero}</span>
+                    {isDone && (
+                      <CheckCircle className={`w-4 h-4 ${isSelected ? 'text-emerald-400' : 'text-emerald-600'}`} />
+                    )}
+                  </button>
+                );
+              })}
+            </div>
+          )}
 
       {/* Case Study Context (Mise en situation) */}
       <div className="bg-amber-50/70 border border-amber-200/80 rounded-2xl p-6 relative">
@@ -271,8 +358,42 @@ export const HomeworkViewer: React.FC<HomeworkViewerProps> = ({
         </div>
       )}
 
+      {/* Questions List Header & Comfort Bar */}
+      <div className="flex flex-wrap items-center justify-between gap-3 bg-white p-4 rounded-2xl border border-slate-200 shadow-2xs">
+        <div className="flex items-center gap-2">
+          <span className="text-xs font-bold uppercase tracking-wider text-slate-700">
+            Questions ({currentDevoir.questions.length})
+          </span>
+          <span className="text-xs text-slate-500 font-medium">
+            • Note sur 20 points
+          </span>
+        </div>
+
+        {/* Text Zoom Stepper */}
+        <div className="flex items-center gap-2">
+          <span className="text-xs text-slate-500 font-medium hidden sm:inline">Confort de lecture :</span>
+          <div className="flex items-center bg-slate-100 rounded-lg p-0.5 border border-slate-200">
+            <button
+              onClick={() => handleZoom(-15)}
+              className="px-2 py-1 hover:bg-slate-200 rounded text-xs font-bold text-slate-700 transition cursor-pointer"
+              title="Diminuer la taille"
+            >
+              A-
+            </button>
+            <span className="px-2 text-xs font-mono font-bold text-slate-700">{homeworkZoom}%</span>
+            <button
+              onClick={() => handleZoom(15)}
+              className="px-2 py-1 hover:bg-slate-200 rounded text-xs font-bold text-slate-700 transition cursor-pointer"
+              title="Agrandir la taille"
+            >
+              A+
+            </button>
+          </div>
+        </div>
+      </div>
+
       {/* Questions List */}
-      <div className="space-y-6">
+      <div className="space-y-6" style={{ fontSize: `${homeworkZoom}%` }}>
         {currentDevoir.questions.map((q, qIndex) => {
           const selectedOption = answers[q.id];
           const isCorrect = selectedOption === q.reponseCorrecteIndex;
@@ -415,6 +536,8 @@ export const HomeworkViewer: React.FC<HomeworkViewerProps> = ({
             <span>Soumettre la copie au professeur</span>
             <ArrowRight className="w-4 h-4" />
           </button>
+        </div>
+      )}
         </div>
       )}
     </div>

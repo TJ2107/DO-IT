@@ -33,6 +33,7 @@ export const CatalogueView: React.FC<CatalogueViewProps> = ({
     { id: Domaine.MAINTENANCE_INDUSTRIELLE, name: 'Maintenance', icon: '🔧' },
     { id: Domaine.GESTION_PROJET, name: 'Gestion Projet', icon: '📋' },
     { id: Domaine.LEADERSHIP_TECHNIQUE, name: 'Leadership Tech', icon: '👔' },
+    { id: Domaine.ANGLAIS_TOEFL, name: 'Anglais TOEFL', icon: '🇬🇧' },
   ];
 
   const isStudent = user.role === 'etudiant';
@@ -98,7 +99,7 @@ export const CatalogueView: React.FC<CatalogueViewProps> = ({
       <div className="space-y-3">
         <div className="flex items-center justify-between">
           <span className="text-xs font-bold text-slate-500 uppercase tracking-wider">
-            12 Domaines d'Expertise Technique
+            {domainsList.length - 1} Domaines d'Expertise Technique
           </span>
           <span className="text-xs font-semibold text-slate-500">
             {filteredCourses.length} formation{filteredCourses.length > 1 ? 's' : ''} disponible{filteredCourses.length > 1 ? 's' : ''}

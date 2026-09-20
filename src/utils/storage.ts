@@ -7,7 +7,11 @@ export function loadUserData(): Utilisateur {
   try {
     const saved = localStorage.getItem(USER_STORAGE_KEY);
     if (saved) {
-      return JSON.parse(saved);
+      const parsed = JSON.parse(saved);
+      if (!parsed.notifications || !Array.isArray(parsed.notifications)) {
+        parsed.notifications = INITIAL_USER.notifications || [];
+      }
+      return parsed;
     }
   } catch {
     // fallback if parse fails

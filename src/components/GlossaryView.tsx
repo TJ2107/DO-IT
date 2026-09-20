@@ -6,7 +6,12 @@ import {
   Check, ArrowRight, ExternalLink, Lightbulb, ShieldCheck, Tag 
 } from 'lucide-react';
 
-export const GlossaryView: React.FC = () => {
+interface GlossaryViewProps {
+  onSelectTerm?: (terme: TermeGlossaire) => void;
+  onClose?: () => void;
+}
+
+export const GlossaryView: React.FC<GlossaryViewProps> = ({ onSelectTerm, onClose }) => {
   const [searchTerm, setSearchTerm] = useState('');
   const [selectedDomaine, setSelectedDomaine] = useState<number | 'all'>('all');
   const [selectedTerm, setSelectedTerm] = useState<TermeGlossaire | null>(GLOSSARY_DATA[0]);
